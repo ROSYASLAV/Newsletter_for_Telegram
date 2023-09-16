@@ -4,52 +4,37 @@ import telethon
 from telethon.sync import TelegramClient
 import schedule
 
-
+# Define the message to be sent to the channels
 ANKETA = '''
 your text
 '''
 
+# Define the IDs of the Telegram channels you want to send messages to
+channel_id1 = 'channel_id1'
+channel_id2 = 'channel_id2'
+# (Add more channel IDs as needed...)
 
-channel_id1 = 'channel_id'
-channel_id2 = 'channel_id'
-channel_id3 = 'channel_id'
-channel_id4 = 'channel_id'
-channel_id5 = 'channel_id'
-channel_id6 = 'channel_id'
-channel_id7 = 'channel_id'
-channel_id8 = 'channel_id'
-channel_id9 = 'channel_id'
-channel_id10 = 'channel_id'
-channel_id11 = 'channel_id'
-channel_id12 = 'channel_id'
-channel_id13 = 'channel_id'
-channel_id14 = 'channel_id'
-channel_id15 = 'channel_id'
-
-# Функция для отправки сообщения в канал
+# Function for sending a message to a channel
 def send_message(channel_id, message):
     try:
+        # Send the message using the Telegram client
         client.send_message(channel_id, message)
-        # Выводим информацию о времени отправки сообщения
-        print(f'Сообщение отправлено в канал с ID {channel_id} в {datetime.now()}')
+        
+        # Print information about the time the message was sent
+        print(f'Message sent to channel with ID {channel_id} at {datetime.now()}')
     except telethon.errors.rpcerrorlist.SlowModeWaitError as e:
+        # Handle SlowModeWaitError if it occurs
         wait_time = e.seconds
-        # Если возникает ошибка SlowModeWaitError, ожидаем указанное время и затем повторно отправляем сообщение
-        print(f'Ожидание {wait_time} секунд перед отправкой следующего сообщения...')
+        print(f'Waiting for {wait_time} seconds before sending the next message...')
         time.sleep(wait_time)
-    except telethon.errors.rpcerrorlist.FloodWaitError as e:
-        # Если возникает ошибка FloodWaitError, вывести сообщение и подождать указанное время плюс 1 секунду перед продолжением
-        print("Flood wait error:", e)
-        delay_time = e.seconds + 1  # Добавим 1 секунду для надежности
-        time.sleep(delay_time)
+        send_message(channel_id, message)
 
-# Константы для подключения к аккаунту Telegram
+# Constants for connecting to your Telegram account
 api_id = 'api_id'
 api_hash = 'api_hash'
-phone_number = '+phone_number'  # Номер вашего телефона в формате '+1234567890'
+phone_number = '+phone_number'  # Your phone number in the format '+1234567890'
 
-
-# Определение списка чатов и времени отправки
+# Define a list of channels and their scheduled sending times
 channel_schedule = [
 {'channel_id': channel_id1, 'send_time': '00:01', 'message': ANKETA},
 {'channel_id': channel_id2, 'send_time': '00:02', 'message': ANKETA},
@@ -396,46 +381,47 @@ channel_schedule = [
 {'channel_id': channel_id13, 'send_time': '22:35', 'message': ANKETA},
 {'channel_id': channel_id14, 'send_time': '22:36', 'message': ANKETA},
 {'channel_id': channel_id15, 'send_time': '22:37', 'message': ANKETA},
+    # Add more channels and their send times as needed...
 ]
 
-# Функция для отправки сообщения в указанный канал
+# Function for sending a message to a specified channel
 def send_message(channel_id, message):
     try:
-        # Отправляем сообщение через клиент Telegram
+        # Send the message using the Telegram client
         client.send_message(channel_id, message)
         
-        # Выводим информацию о времени отправки сообщения
-        print(f'Сообщение от {phone_number} отправлено в канал с ID {channel_id} в {datetime.now()}')
+        # Print information about the time the message was sent
+        print(f'Message from {phone_number} sent to channel with ID {channel_id} at {datetime.now()}')
     except telethon.errors.rpcerrorlist.SlowModeWaitError as e:
-        # Обрабатываем ошибку SlowModeWaitError, если она возникает
+        # Handle SlowModeWaitError if it occurs
         wait_time = e.seconds
-        print(f'Ожидание {wait_time} секунд перед отправкой следующего сообщения...')
+        print(f'Waiting for {wait_time} seconds before sending the next message...')
         time.sleep(wait_time)
         send_message(channel_id, message)
 
-# Создание клиента Telegram с использованием 'session_name', 'api_id' и 'api_hash'
+# Create a Telegram client using 'session_name', 'api_id', and 'api_hash'
 with TelegramClient('session_name', api_id, api_hash) as client:
-    # Устанавливаем соединение с серверами Telegram
+    # Connect to Telegram servers
     client.connect()
     
-    # Проверяем, авторизован ли аккаунт пользователя
+    # Check if the user account is authorized
     if not client.is_user_authorized():
-        # Если не авторизован, запрашиваем код подтверждения и авторизуемся
+        # If not authorized, request the confirmation code and sign in
         client.send_code_request(phone_number)
-        client.sign_in(phone_number, input('Введите код подтверждения: '))
+        client.sign_in(phone_number, input('Enter the confirmation code: '))
 
-    # Настройка задач планировщика для отправки сообщений
+    # Set up scheduled tasks for sending messages
     for channel_data in channel_schedule:
         channel_id = channel_data['channel_id']
         send_time = channel_data['send_time']
         message_text = channel_data['message']
-        # Запланировать отправку сообщения в указанное время
+        # Schedule sending the message at the specified time
         schedule.every().day.at(send_time).do(send_message, channel_id=channel_id, message=message_text)
 
-    # Бесконечный цикл выполнения задач планировщика
+    # Infinite loop to run scheduled tasks
     while True:
-        # Запуск задач планировщика, проверка выполнения задач
+        # Run scheduled tasks and check for pending tasks
         schedule.run_pending()
         
-        # Подождать 1 секунду перед следующей проверкой задач
+        # Wait for 1 second before the next task check
         time.sleep(1)
